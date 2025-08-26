@@ -213,9 +213,6 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         position = position.clone().add(0, yOffset, 0);
     
         setPosition(position);
-        setYaw(yaw);
-        setPitch(pitch);
-        setHeadYaw(headYaw);
         setOnGround(isOnGround);
     
         MoveEntityAbsolutePacket moveEntityPacket = new MoveEntityAbsolutePacket();

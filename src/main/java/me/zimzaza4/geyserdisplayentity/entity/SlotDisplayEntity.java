@@ -8,6 +8,7 @@ import org.cloudburstmc.math.matrix.Matrix3f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket; // added
 import org.geysermc.geyser.entity.EntityDefinition;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.session.GeyserSession;
@@ -28,11 +29,13 @@ public class SlotDisplayEntity extends Entity {
 
     protected Settings.DisplayEntityOptions options = Settings.IMP.GENERAL;
 
+    protected Quaternionf lastLeft = Quaternionf.IDENTITY;
+    protected Quaternionf lastRight = Quaternionf.IDENTITY;
+
     public SlotDisplayEntity(GeyserSession session, int entityId, long geyserId, UUID uuid,
                              EntityDefinition<?> definition,
                              Vector3f position, Vector3f motion, float yaw, float pitch, float headYaw) {
         super(session, entityId, geyserId, uuid, definition, position, motion, yaw, pitch, headYaw);
-
     }
 
     public void updateMainHand(GeyserSession session) {
@@ -121,13 +124,19 @@ public class SlotDisplayEntity extends Entity {
     }
 
     public void setLeftRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
-        setRotation(entityMetadata.getValue());
+        Quaternionf quaternion = entityMetadata.getValue();
+        this.lastLeft = quaternion;
+        setRotation(quaternion);
         rotationUpdated = true;
+        applyBedrockYawPitchFromCombined();
     }
 
     public void setRightRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
-        setRotation(entityMetadata.getValue());
+        Quaternionf quaternion = entityMetadata.getValue();
+        this.lastRight = quaternion;
+        setRotation(quaternion);
         rotationUpdated = true;
+        applyBedrockYawPitchFromCombined();
     }
 
     protected void setRotation(Quaternionf q) {
@@ -149,16 +158,24 @@ public class SlotDisplayEntity extends Entity {
         propertyManager.add("geyser:s_q", qScale);
     }
 
-    protected Vector3f getNonNormalScale(Quaternionf q) {
-        Quaternionf qx = q.mul(0, 1, 0, 0).mul(q.conjugate());
-        Quaternionf qy = q.mul(0, 0, 1, 0).mul(q.conjugate());
-        Quaternionf qz = q.mul(0, 0, 0, 1).mul(q.conjugate());
+    protected void applyBedrockYawPitchFromCombined() {
+        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
 
-        float x = (float) Math.sqrt(qx.getX() * qx.getX() + qx.getY() * qx.getY() + qx.getZ() * qx.getZ());
-        float y = (float) Math.sqrt(qy.getX() * qy.getX() + qy.getY() * qy.getY() + qy.getZ() * qy.getZ());
-        float z = (float) Math.sqrt(qz.getX() * qz.getX() + qz.getY() * qz.getY() + qz.getZ() * qz.getZ());
+        Vector3f fwd = combined.rotate(0f, 0f, 1f);
+        float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
+        float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
 
-        return Vector3f.from(x, y, z);
+        yawDeg = MathUtils.wrapDegrees(yawDeg);
+        setYaw(yawDeg);
+        setHeadYaw(yawDeg);
+        setPitch(pitchDeg);
+
+        MoveEntityAbsolutePacket rotPkt = new MoveEntityAbsolutePacket();
+        rotPkt.setRuntimeEntityId(geyserId);
+        rotPkt.setPosition(position);
+        rotPkt.setRotation(getBedrockRotation());
+        rotPkt.setTeleported(false);
+        session.sendUpstreamPacket(rotPkt);
     }
 
     protected Vector3f toEulerZYX(Quaternionf q) {
@@ -173,20 +190,6 @@ public class SlotDisplayEntity extends Entity {
         float r01 = m.get(0, 1);
         float r10 = m.get(1, 0);
         float r11 = m.get(1, 1);
-
-        // float w = qn.getW();
-        // float x = qn.getX();
-        // float y = qn.getY();
-        // float z = qn.getZ();
-
-        // float yaw = (float) Math.atan2(2 * (y * w - x * z), 1 - 2 * (y * y + z * z));
-        // float pitch = (float) Math.asin(2 * (x * y + z * w));
-        // float roll = (float) Math.atan2(2 * (x * w - y * z), 1 - 2 * (x * x + z * z));
-
-        // float x = Math.abs(r20) < 0.9999999F ? (float) Math.atan2(r21, r22) : 0F;
-        // float y = - MathUtils.clamp((float) Math.asin(r20), -1F, 1F);
-        // float z = Math.abs(r20) < 0.9999999F ? (float) Math.atan2(r10, r00) : (float)
-        // Math.atan2(- r01, r11);
 
         float x, y, z;
 
@@ -214,6 +217,4 @@ public class SlotDisplayEntity extends Entity {
         propertyManager.add("geyser:r_z", z);
         updateBedrockEntityProperties();
     }
-
-
 }
