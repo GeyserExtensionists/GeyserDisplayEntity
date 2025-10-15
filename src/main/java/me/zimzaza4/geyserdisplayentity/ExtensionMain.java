@@ -6,11 +6,15 @@ import me.zimzaza4.geyserdisplayentity.entity.SlotDisplayEntity;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtType;
 import org.geysermc.event.subscribe.Subscribe;
+import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.extension.ExtensionLogger;
+import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.EntityDefinition;
 import org.geysermc.geyser.entity.properties.GeyserEntityProperties;
+import org.geysermc.geyser.entity.properties.type.FloatProperty;
+import org.geysermc.geyser.entity.properties.type.IntProperty;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
@@ -25,6 +29,11 @@ public class ExtensionMain implements Extension {
     private static EntityDefinition<ItemDisplayEntity> ITEM_DISPLAY;
     private static EntityDefinition<BlockDisplayEntity> BLOCK_DISPLAY;
 
+
+    public static final Integer MAX_VALUE = 1000000;
+
+    public static final Integer MIN_VALUE = -1000000;
+
     // From Kastle's Geyser branch
     @Subscribe
     public void onLoad(GeyserPostInitializeEvent event) {
@@ -35,7 +44,10 @@ public class ExtensionMain implements Extension {
         } else {
             Settings.IMP.reload(configFile);
         }
+    }
 
+    @Subscribe
+    public void onDefine(GeyserDefineEntityPropertiesEvent event) {
         try {
             EntityDefinition<Entity> entityBase = EntityDefinition.builder(Entity::new)
                     .addTranslator(MetadataTypes.BYTE, Entity::setFlags)
@@ -48,20 +60,20 @@ public class ExtensionMain implements Extension {
                     .addTranslator(MetadataTypes.INT, Entity::setFreezing)
                     .build();
 
-            GeyserEntityProperties.Builder displayPropBuilder = new GeyserEntityProperties.Builder()
-                    .addInt("geyser:s_id")
-                    .addInt("geyser:s_int")
-                    .addFloat("geyser:i_dur")
-                    .addFloat("geyser:r_x", -180F, 180F)
-                    .addFloat("geyser:r_y", -180F, 180F)
-                    .addFloat("geyser:r_z", -180F, 180F)
-                    .addFloat("geyser:t_x")
-                    .addFloat("geyser:t_y")
-                    .addFloat("geyser:t_z")
-                    .addFloat("geyser:s_x")
-                    .addFloat("geyser:s_y")
-                    .addFloat("geyser:s_z")
-                    .addFloat("geyser:s_q");
+            GeyserEntityProperties.Builder displayPropBuilder = new GeyserEntityProperties.Builder("geyser:item_display")
+                    .add(new IntProperty(Identifier.of("geyser:s_id"), MAX_VALUE, MIN_VALUE, 0))
+                    .add(new IntProperty(Identifier.of("geyser:s_int"), MAX_VALUE, MIN_VALUE, 0))
+                    .add(new FloatProperty(Identifier.of("geyser:i_dur"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F))
+                    .add(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F));
             EntityDefinition<SlotDisplayEntity> slotDisplayBase = EntityDefinition.inherited(SlotDisplayEntity::new, entityBase)
                     .addTranslator(null) // Interpolation start ticks
                     .addTranslator(null) // Interpolation duration ID
@@ -82,14 +94,14 @@ public class ExtensionMain implements Extension {
             BLOCK_DISPLAY = EntityDefinition.inherited(BlockDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.BLOCK_DISPLAY)
                     .height(1.975f).width(0.2f)
-                    .registeredProperties(displayPropBuilder.build())
+                    .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:block_display")
                     .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntity::setDisplayedBlockState)
                     .build();
             ITEM_DISPLAY = EntityDefinition.inherited(ItemDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.ITEM_DISPLAY)
                     .height(1.975f).width(0.2f)
-                    .registeredProperties(displayPropBuilder.build())
+                    .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:item_display")
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)
                     .addTranslator(MetadataTypes.BYTE, ItemDisplayEntity::setDisplayType)
