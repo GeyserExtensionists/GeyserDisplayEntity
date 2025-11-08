@@ -170,7 +170,10 @@ public class SlotDisplayEntity extends Entity {
         float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
         float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
 
+        yawDeg += getYaw();
+
         yawDeg = MathUtils.wrapDegrees(yawDeg);
+
         setYaw(yawDeg);
         setHeadYaw(yawDeg);
         setPitch(pitchDeg);
