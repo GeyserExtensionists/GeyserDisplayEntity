@@ -36,6 +36,8 @@ public class Settings extends YamlConfig {
         public double Y_OFFSET = -0.5;
         @Comment("Use entity scale, instead of entity properties")
         public boolean VANILLA_SCALE = true;
+        @Comment("Vanilla scale multiplier")
+        public double VANILLA_SCALE_MULTIPLIER = 1.0;
         @Comment("Equip custom items (items with custom mapping) to hand")
         public boolean HAND = false;
     }
