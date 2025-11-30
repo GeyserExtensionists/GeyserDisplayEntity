@@ -134,18 +134,24 @@ public class SlotDisplayEntity extends Entity {
 
     public void setLeftRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
         Quaternionf quaternion = entityMetadata.getValue();
-        this.lastLeft = quaternion;
-        setRotation(quaternion);
-        rotationUpdated = true;
-        applyBedrockYawPitchFromCombined();
+
+        if (!this.lastLeft.equals(quaternion)) {
+            this.lastLeft = quaternion;
+            setRotation(quaternion);
+            rotationUpdated = true;
+            applyBedrockYawPitchFromCombined();
+        }
     }
 
     public void setRightRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
         Quaternionf quaternion = entityMetadata.getValue();
-        this.lastRight = quaternion;
-        setRotation(quaternion);
-        rotationUpdated = true;
-        applyBedrockYawPitchFromCombined();
+
+        if (!this.lastRight.equals(quaternion)) {
+            this.lastRight = quaternion;
+            setRotation(quaternion);
+            rotationUpdated = true;
+            applyBedrockYawPitchFromCombined();
+        }
     }
 
     protected void setRotation(Quaternionf q) {
@@ -173,8 +179,6 @@ public class SlotDisplayEntity extends Entity {
         Vector3f fwd = combined.rotate(0f, 0f, 1f);
         float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
         float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
-
-        yawDeg += getYaw();
 
         yawDeg = MathUtils.wrapDegrees(yawDeg);
 
