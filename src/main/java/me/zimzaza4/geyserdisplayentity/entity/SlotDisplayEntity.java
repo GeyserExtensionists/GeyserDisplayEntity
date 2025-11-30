@@ -134,18 +134,24 @@ public class SlotDisplayEntity extends Entity {
 
     public void setLeftRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
         Quaternionf quaternion = entityMetadata.getValue();
-        this.lastLeft = quaternion;
-        setRotation(quaternion);
-        rotationUpdated = true;
-        applyBedrockYawPitchFromCombined();
+
+        if (!this.lastLeft.equals(quaternion)) {
+            this.lastLeft = quaternion;
+            setRotation(quaternion);
+            rotationUpdated = true;
+            applyBedrockYawPitchFromCombined();
+        }
     }
 
     public void setRightRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
         Quaternionf quaternion = entityMetadata.getValue();
-        this.lastRight = quaternion;
-        setRotation(quaternion);
-        rotationUpdated = true;
-        applyBedrockYawPitchFromCombined();
+
+        if (!this.lastRight.equals(quaternion)) {
+            this.lastRight = quaternion;
+            setRotation(quaternion);
+            rotationUpdated = true;
+            applyBedrockYawPitchFromCombined();
+        }
     }
 
     protected void setRotation(Quaternionf q) {
