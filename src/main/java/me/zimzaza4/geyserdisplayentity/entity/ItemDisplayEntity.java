@@ -85,6 +85,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
                     if (mapping.OPTIONS != null) {
                         options = mapping.OPTIONS;
                         setOffset(options.Y_OFFSET);
+                        if (options.VANILLA_SCALE) {
+                            applyScale();
+                        }
                     }
                     break;
                 }
@@ -92,6 +95,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
                     if (mapping.OPTIONS != null) {
                         options = mapping.OPTIONS;
                         setOffset(options.Y_OFFSET);
+                        if (options.VANILLA_SCALE) {
+                            applyScale();
+                        }
                     }
                     break;
                 }
