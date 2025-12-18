@@ -8,6 +8,7 @@ import org.cloudburstmc.nbt.NbtType;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
+import org.geysermc.geyser.api.event.lifecycle.GeyserPreInitializeEvent;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.extension.ExtensionLogger;
 import org.geysermc.geyser.api.util.Identifier;
@@ -36,8 +37,9 @@ public class ExtensionMain implements Extension {
 
     // From Kastle's Geyser branch
     @Subscribe
-    public void onLoad(GeyserPostInitializeEvent event) {
+    public void onLoad(GeyserPreInitializeEvent event) {
         LOGGER = logger();
+        logger().info("Loading GeyserDisplayEntity config...");
         File configFile = dataFolder().resolve("config.yml").toFile();
         if (configFile.exists()) {
             Settings.IMP.load(configFile);
@@ -93,14 +95,14 @@ public class ExtensionMain implements Extension {
                     .build();
             BLOCK_DISPLAY = EntityDefinition.inherited(BlockDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.BLOCK_DISPLAY)
-                    .height(1.975f).width(0.2f)
+                    .height((float) Settings.IMP.HEIGHT).width(0.2f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:block_display")
                     .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntity::setDisplayedBlockState)
                     .build();
             ITEM_DISPLAY = EntityDefinition.inherited(ItemDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.ITEM_DISPLAY)
-                    .height(1.975f).width(0.2f)
+                    .height((float) Settings.IMP.HEIGHT).width(0.2f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:item_display")
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)

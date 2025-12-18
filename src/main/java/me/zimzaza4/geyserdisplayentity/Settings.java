@@ -10,6 +10,9 @@ public class Settings extends YamlConfig {
     @Ignore
     public static final Settings IMP = new Settings();
 
+    @Comment("The height of display entity")
+    public double HEIGHT = 1.7;
+
     @Comment("General display options")
     @Create
     public DisplayEntityOptions GENERAL;
