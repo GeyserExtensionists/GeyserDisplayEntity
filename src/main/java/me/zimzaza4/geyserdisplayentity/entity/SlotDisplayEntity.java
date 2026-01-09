@@ -38,9 +38,14 @@ public class SlotDisplayEntity extends Entity {
     protected Quaternionf lastRight = Quaternionf.IDENTITY;
 
     public SlotDisplayEntity(GeyserSession session, int entityId, long geyserId, UUID uuid,
-                             EntityDefinition<?> definition,
-                             Vector3f position, Vector3f motion, float yaw, float pitch, float headYaw) {
+        EntityDefinition<?> definition,
+        Vector3f position, Vector3f motion, float yaw, float pitch, float headYaw) {
         super(session, entityId, geyserId, uuid, definition, position, motion, yaw, pitch, headYaw);
+
+        // Ensure options is never null
+        if (this.options == null) {
+            this.options = Settings.IMP.GENERAL != null ? Settings.IMP.GENERAL : new Settings.DisplayEntityOptions();
+        }
     }
 
     public void updateMainHand(GeyserSession session) {
@@ -58,24 +63,33 @@ public class SlotDisplayEntity extends Entity {
         validQScale = false;
         rotationUpdated = false;
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), translation.getX() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), translation.getY() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), translation.getZ() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getX() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getY() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getZ() * 10);
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F), scale.getX());
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F), scale.getY());
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F), scale.getZ());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getX());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getY());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getZ());
 
         if (options == null) {
             options = Settings.IMP.GENERAL;
         }
-        if (options.VANILLA_SCALE) {
+        if (options != null && options.VANILLA_SCALE) {
             applyScale();
         }
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(rotation.getX()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(-rotation.getY()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(-rotation.getZ()));
 
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
 
@@ -90,7 +104,8 @@ public class SlotDisplayEntity extends Entity {
 
         if (propertyManager.hasProperties()) {
             rotationUpdated = false;
-            propertyManager.addProperty(new IntProperty(Identifier.of("geyser:s_id"), MAX_VALUE, MIN_VALUE, 0), (int) (Math.random() * MAX_VALUE));
+            propertyManager.addProperty(new IntProperty(Identifier.of("geyser:s_id"), MAX_VALUE, MIN_VALUE, 0),
+                (int) (Math.random() * MAX_VALUE));
         }
 
         super.updateBedrockEntityProperties();
@@ -104,28 +119,35 @@ public class SlotDisplayEntity extends Entity {
 
     public void setTranslation(EntityMetadata<Vector3f, ?> entityMetadata) {
         this.translation = entityMetadata.getValue();
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), translation.getX() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), translation.getY() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), translation.getZ() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getX() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getY() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F),
+            translation.getZ() * 10);
     }
 
     public void setScale(EntityMetadata<Vector3f, ?> entityMetadata) {
 
         this.scale = entityMetadata.getValue();
 
-        if (options.VANILLA_SCALE) {
+        if (options != null && options.VANILLA_SCALE) {
             applyScale();
         }
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F), scale.getX());
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F), scale.getY());
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F), scale.getZ());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getX());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getY());
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F),
+            scale.getZ());
     }
 
 
     protected void applyScale() {
         Vector3f vector3f = this.scale;
         float scale = (vector3f.getX() + vector3f.getY() + vector3f.getZ()) / 3;
-        if (options.VANILLA_SCALE) {
+
+        if (options != null && options.VANILLA_SCALE) {
             scale *= (float) options.VANILLA_SCALE_MULTIPLIER;
         }
 
@@ -165,9 +187,12 @@ public class SlotDisplayEntity extends Entity {
             this.rotation = r;
         }
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(rotation.getX()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(-rotation.getY()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F),
+            MathUtils.wrapDegrees(-rotation.getZ()));
 
         this.qScale = s;
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
