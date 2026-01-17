@@ -3,7 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "9.2.2"
 }
 
-group = "me.zimzaza4"
+group = "me.geyserextensionists"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -30,7 +30,7 @@ tasks.compileJava {
 tasks.shadowJar {
     archiveFileName.set("${rootProject.name}-${version}.jar")
 
-    relocate("org.spongepowered.configurate", "me.zimzaza4.geyserdisplayentity.libs.configurate")
+    relocate("org.spongepowered.configurate", "me.geyserextensionists.geyserdisplayentity.libs.configurate")
 }
 
 tasks.build {
