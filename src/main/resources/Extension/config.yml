@@ -1,0 +1,16 @@
+# General display options
+general:
+  # The height of display entity
+  height: 1.7
+  # The y-offset of display entity
+  y-offset: -0.5
+  # Use entity scale, instead of entity properties
+  vanilla-scale: false
+  vanilla-scale-multiplier: 1
+  # Equip custom items (items with custom mapping) to hand
+  hand: false
+
+# Invisible item types
+hide-types:
+  - "minecraft:leather_horse_armor"
+  - "minecraft:bone"

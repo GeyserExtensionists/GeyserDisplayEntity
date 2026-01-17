@@ -1,0 +1,4 @@
+commands:
+  geyserdisplayentity:
+    reload:
+      successfully-reloaded: "GeyserDisplayEntity reloaded!"
