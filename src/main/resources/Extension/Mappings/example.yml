@@ -4,6 +4,8 @@ mappings:
     type: "minecraft:iron_sword"
     # Custom model data, -1 represent ignore custom model data
     model-data: -1
+    # Identifier from Geyser Mappings file. This will override model-data search. Set to none to disable.
+    identifier: none
     # options
     displayentityoptions:
       # The y-offset of display entity
