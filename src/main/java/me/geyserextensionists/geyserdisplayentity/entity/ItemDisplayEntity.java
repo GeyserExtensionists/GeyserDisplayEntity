@@ -12,6 +12,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
+import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.item.type.DyeableArmorItem;
 import org.geysermc.geyser.session.GeyserSession;
@@ -68,30 +69,53 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
 
 
+        String bedrockIdentifier = item.getDefinition().getIdentifier()
+                .replace("geyser_custom:", "");
+
         CustomModelData modelData = null;
         DataComponents components = stack.getDataComponentsPatch();
+        if (components != null) {
+            modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+        }
 
-        if (components != null) modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+        for (FileConfiguration mappingsConfig :
+                GeyserDisplayEntity.getExtension()
+                        .getConfigManager()
+                        .getConfigMappingsCache()
+                        .values()) {
 
-        for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
-            for (Object mappingKey : mappingsConfig.getRootNode().childrenMap().keySet()) {
-                String mappingString = mappingKey.toString();
-
-                FileConfiguration mappingConfig = mappingsConfig.getConfigurationSection(mappingString);
+            for (Object key : mappingsConfig.getRootNode().childrenMap().keySet()) {
+                FileConfiguration mappingConfig =
+                        mappingsConfig.getConfigurationSection(key.toString());
                 if (mappingConfig == null) continue;
+
                 if (!mappingConfig.getString("type").equals(type)) continue;
 
-                if (mappingConfig.getInt("model-data") == -1) {
-                    config = mappingConfig.getConfigurationSection("displayentityoptions");
-                    setOffset(config.getDouble("y-offset"));
-                    if (config.getBoolean("vanilla-scale")) applyScale();
+                String configIdentifier =
+                        mappingConfig.getString("identifier");
+
+                boolean usingIdentifier =
+                        !configIdentifier.isEmpty()
+                                && !configIdentifier.equalsIgnoreCase("none");
+
+                // Try to match identifier first
+                if (usingIdentifier) {
+                    if (!configIdentifier.equalsIgnoreCase(bedrockIdentifier)) continue;
+                    applyDisplayConfig(mappingConfig);
                     break;
                 }
 
-                if (modelData != null && Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) {
-                    config = mappingConfig.getConfigurationSection("displayentityoptions");
-                    setOffset(config.getDouble("y-offset"));
-                    if (config.getBoolean("vanilla-scale")) applyScale();
+                // If cant match identifier, check for -1 model data
+                int modelDataValue = mappingConfig.getInt("model-data");
+                if (modelDataValue == -1) {
+                    applyDisplayConfig(mappingConfig);
+                    break;
+                }
+
+                // If using actual Model Data, match.
+                if (modelData != null
+                        && Math.abs(modelDataValue - modelData.floats().get(0)) < 0.5) {
+                    applyDisplayConfig(mappingConfig);
                     break;
                 }
             }
@@ -118,6 +142,14 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         updateMainHand(session);
+    }
+
+    private void applyDisplayConfig(FileConfiguration mappingConfig) {
+        config = mappingConfig.getConfigurationSection("displayentityoptions");
+        setOffset(config.getDouble("y-offset"));
+        if (config.getBoolean("vanilla-scale")) {
+            applyScale();
+        }
     }
 
     @Override
