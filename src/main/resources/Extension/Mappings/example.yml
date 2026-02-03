@@ -1,9 +1,15 @@
+# Legacy Model format:
+# model-data: -1
+
+# Modern Model format:
+# item-identifier: "none"
+
 mappings:
   example:
     # Item type
     type: "minecraft:iron_sword"
-    # Custom model data, -1 represent ignore custom model data
-    model-data: -1
+    # Item identifier, Set to "none" to ignore the item model
+    item-identifier: "none"
     # options
     displayentityoptions:
       # The y-offset of display entity

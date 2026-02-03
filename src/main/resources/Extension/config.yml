@@ -1,5 +1,7 @@
 # General display options
 general:
+  # Uses the custom data model numbers (please switch to item models)
+  use-legacy-models: false
   # The height of display entity
   height: 1.7
   # The y-offset of display entity

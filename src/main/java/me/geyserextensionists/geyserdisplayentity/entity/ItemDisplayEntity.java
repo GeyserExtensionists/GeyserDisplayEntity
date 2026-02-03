@@ -67,12 +67,6 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
 
-
-        CustomModelData modelData = null;
-        DataComponents components = stack.getDataComponentsPatch();
-
-        if (components != null) modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
-
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
             for (Object mappingKey : mappingsConfig.getRootNode().childrenMap().keySet()) {
                 String mappingString = mappingKey.toString();
@@ -81,19 +75,13 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
                 if (mappingConfig == null) continue;
                 if (!mappingConfig.getString("type").equals(type)) continue;
 
-                if (mappingConfig.getInt("model-data") == -1) {
-                    config = mappingConfig.getConfigurationSection("displayentityoptions");
-                    setOffset(config.getDouble("y-offset"));
-                    if (config.getBoolean("vanilla-scale")) applyScale();
+                if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("general.use-legacy-models")) {
+                    applyLegacyModelData(stack, mappingConfig);
                     break;
                 }
 
-                if (modelData != null && Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) {
-                    config = mappingConfig.getConfigurationSection("displayentityoptions");
-                    setOffset(config.getDouble("y-offset"));
-                    if (config.getBoolean("vanilla-scale")) applyScale();
-                    break;
-                }
+                applyModernItemModels(item, mappingConfig);
+                break;
             }
         }
 
@@ -118,6 +106,43 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         updateMainHand(session);
+    }
+
+    private void applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
+        CustomModelData modelData = null;
+        DataComponents components = item.getDataComponentsPatch();
+
+        if (components != null) modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+
+        if (mappingConfig.getInt("model-data") == -1) {
+            entityApplyDisplayConfig(mappingConfig);
+            return;
+        }
+
+        if (modelData == null) return;
+
+        if (Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) {
+            entityApplyDisplayConfig(mappingConfig);
+        }
+    }
+
+    private void applyModernItemModels(ItemData itemData, FileConfiguration mappingConfig) {
+        String itemBedrockIdentifier = itemData.getDefinition().getIdentifier().replace("geyser_custom:", "");
+
+        if (mappingConfig.getString("item-identifier").equals("none")) {
+            entityApplyDisplayConfig(mappingConfig);
+            return;
+        }
+
+        if (mappingConfig.getString("item-identifier").equalsIgnoreCase(itemBedrockIdentifier)) {
+            entityApplyDisplayConfig(mappingConfig);
+        }
+    }
+
+    private void entityApplyDisplayConfig(FileConfiguration mappingConfig) {
+        config = mappingConfig.getConfigurationSection("displayentityoptions");
+        setOffset(config.getDouble("y-offset"));
+        if (config.getBoolean("vanilla-scale")) applyScale();
     }
 
     @Override

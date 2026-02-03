@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "me.geyserextensionists"
-version = "1.0-SNAPSHOT"
+version = "1.0.2"
 
 repositories {
     mavenCentral()
@@ -35,4 +35,13 @@ tasks.shadowJar {
 
 tasks.build {
     dependsOn("shadowJar")
+}
+
+tasks.processResources {
+    val props = mapOf("version" to version)
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
+    filesMatching("extension.yml") {
+        expand(props)
+    }
 }
