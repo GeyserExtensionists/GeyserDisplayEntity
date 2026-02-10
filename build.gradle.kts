@@ -13,8 +13,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.geysermc.geyser:core:2.9.2-SNAPSHOT")
-    compileOnly("org.geysermc.geyser:api:2.9.2-SNAPSHOT")
+    compileOnly("org.geysermc.geyser:core:2.9.3-SNAPSHOT")
+    compileOnly("org.geysermc.geyser:api:2.9.3-SNAPSHOT")
 
     implementation("org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT")
 }
