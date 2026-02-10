@@ -40,7 +40,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
     }
 
     public void setOffset(double offset) {
-        moveRelative(0, offset - lastOffset, 0, pitch, yaw, headYaw, false);
+        moveRelative(0, offset - lastOffset, 0, yaw, pitch, headYaw, false);
         this.lastOffset = offset;
     }
 
