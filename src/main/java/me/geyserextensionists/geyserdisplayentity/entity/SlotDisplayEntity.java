@@ -44,11 +44,15 @@ public class SlotDisplayEntity extends Entity {
 
     }
 
+    protected FileConfiguration getGeneralConfig() {
+        return GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getConfigurationSection("general");
+    }
+
     @Override
     public void initializeMetadata() {
         super.initializeMetadata();
 
-        config = GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getConfigurationSection("general");
+        config = getGeneralConfig();
 
         item = ItemData.AIR;
         translation = Vector3f.from(0, 0, 0);
@@ -66,7 +70,7 @@ public class SlotDisplayEntity extends Entity {
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F), scale.getY());
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_z"), MAX_VALUE, MIN_VALUE, 0F), scale.getZ());
 
-        if (config.getBoolean("vanilla-scale")) applyScale();
+        if (config != null && config.getBoolean("vanilla-scale")) applyScale();
 
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
@@ -105,7 +109,7 @@ public class SlotDisplayEntity extends Entity {
     public void setScale(EntityMetadata<Vector3f, ?> entityMetadata) {
         this.scale = entityMetadata.getValue();
 
-        if (config.getBoolean("vanilla-scale")) applyScale();
+        if (config != null && config.getBoolean("vanilla-scale")) applyScale();
 
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_x"), MAX_VALUE, MIN_VALUE, 0F), scale.getX());
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_y"), MAX_VALUE, MIN_VALUE, 0F), scale.getY());
@@ -115,7 +119,12 @@ public class SlotDisplayEntity extends Entity {
     protected void applyScale() {
         Vector3f vector3f = this.scale;
         float scale = (vector3f.getX() + vector3f.getY() + vector3f.getZ()) / 3;
-        if (config.getBoolean("vanilla-scale")) scale *= (float) config.getDouble("vanilla-scale-multiplier");
+        if (config != null && config.getBoolean("vanilla-scale")) {
+            float multiplier = config.contains("vanilla-scale-multiplier")
+                    ? (float) config.getDouble("vanilla-scale-multiplier")
+                    : 1.0f;
+            scale *= multiplier;
+        }
         this.dirtyMetadata.put(EntityDataTypes.SCALE, scale);
     }
 

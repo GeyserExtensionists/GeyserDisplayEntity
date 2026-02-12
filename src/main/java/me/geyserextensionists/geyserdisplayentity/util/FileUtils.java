@@ -38,8 +38,10 @@ public class FileUtils {
     public static List<File> getAllFiles(File folder, String fileType) {
         List<File> files = new ArrayList<>();
         if (folder == null || !folder.exists()) return files;
+        File[] listedFiles = folder.listFiles();
+        if (listedFiles == null) return files;
 
-        for (File file : folder.listFiles()) {
+        for (File file : listedFiles) {
             if (file.isDirectory()) {
                 files.addAll(getAllFiles(file, fileType));
             } else if (file.getName().endsWith(fileType)) {

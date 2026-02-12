@@ -6,17 +6,19 @@ import me.geyserextensionists.geyserdisplayentity.util.FileUtils;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ConfigManager {
 
     private FileConfiguration config, lang;
 
-    private HashMap<String, FileConfiguration> configMappingsCache;
+    private LinkedHashMap<String, FileConfiguration> configMappingsCache;
 
     public ConfigManager() {
         load();
-        loadConfigMappings();
     }
 
     public void load() {
@@ -29,13 +31,23 @@ public class ConfigManager {
     }
 
     private void loadConfigMappings() {
-        HashMap<String, FileConfiguration> tempConfigMappingsCache = new HashMap<>();
+        LinkedHashMap<String, FileConfiguration> tempConfigMappingsCache = new LinkedHashMap<>();
+        List<File> mappingFiles = new ArrayList<>(FileUtils.getAllFiles(GeyserDisplayEntity.getExtension().dataFolder().resolve("Mappings").toFile(), ".yml"));
+        mappingFiles.sort(Comparator.comparing(File::getAbsolutePath, String.CASE_INSENSITIVE_ORDER));
 
-        for (File file : FileUtils.getAllFiles(GeyserDisplayEntity.getExtension().dataFolder().resolve("Mappings").toFile(), ".yml")) {
+        // Priority: explicit mapping files are evaluated first in deterministic order.
+        for (File file : mappingFiles) {
             FileConfiguration mappingsConfigFile = new FileConfiguration("Mappings/" + file.getName());
             FileConfiguration mappingsConfig = mappingsConfigFile.getConfigurationSection("mappings");
+            if (mappingsConfig == null) continue;
 
             tempConfigMappingsCache.put(file.getName().replace(".yml", ""), mappingsConfig);
+        }
+
+        // Fallback priority: legacy config.yml mappings are evaluated last.
+        FileConfiguration legacyMappings = config.getConfigurationSection("mappings");
+        if (legacyMappings != null) {
+            tempConfigMappingsCache.put("legacy-config", legacyMappings);
         }
 
         this.configMappingsCache = tempConfigMappingsCache;
@@ -49,7 +61,7 @@ public class ConfigManager {
         return lang;
     }
 
-    public HashMap<String, FileConfiguration> getConfigMappingsCache() {
+    public LinkedHashMap<String, FileConfiguration> getConfigMappingsCache() {
         return configMappingsCache;
     }
 }
