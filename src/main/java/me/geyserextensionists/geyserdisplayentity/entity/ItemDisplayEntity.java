@@ -52,6 +52,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
             return;
         }
 
+        // Reset config to general defaults so unmapped items always have valid display options
+        config = GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getConfigurationSection("general");
+
         ItemData item = ItemTranslator.translateToBedrock(session, stack);
         this.item = item;
 
@@ -67,22 +70,33 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
 
+        boolean mappingApplied = false;
+
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
+            if (mappingsConfig == null) continue;
+
             for (Object mappingKey : mappingsConfig.getRootNode().childrenMap().keySet()) {
                 String mappingString = mappingKey.toString();
 
                 FileConfiguration mappingConfig = mappingsConfig.getConfigurationSection(mappingString);
                 if (mappingConfig == null) continue;
-                if (!mappingConfig.getString("type").equals(type)) continue;
+                String mappingType = mappingConfig.getString("type");
+                if (mappingType == null || !mappingType.trim().equals(type)) continue;
 
-                if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("general.use-legacy-models")) {
-                    applyLegacyModelData(stack, mappingConfig);
-                    break;
+                boolean applied;
+                if (shouldUseLegacyMapping(mappingConfig)) {
+                    applied = applyLegacyModelData(stack, mappingConfig);
+                } else {
+                    applied = applyModernItemModels(item, mappingConfig);
                 }
 
-                applyModernItemModels(item, mappingConfig);
-                break;
+                if (applied) {
+                    mappingApplied = true;
+                    break;
+                }
             }
+
+            if (mappingApplied) break;
         }
 
         if (!item.getDefinition().getIdentifier().startsWith("minecraft:")) {
@@ -96,53 +110,113 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         // HIDE_TYPES check only if stack is present (it is)
         String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier();
+        boolean wasHiddenByType = needHide;
 
-        if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getStringList("hide-types").contains(javaID)) {
+        // Keep hide-types behavior for vanilla items, but allow custom translated items
+        // (e.g. custom model data on minecraft:bone) to remain visible unless explicitly forced.
+        FileConfiguration rootConfig = GeyserDisplayEntity.getExtension().getConfigManager().getConfig();
+        boolean hiddenByType = rootConfig.getStringList("hide-types").contains(javaID);
+        boolean forceHiddenCustomType = rootConfig.getStringList("hide-custom-types").contains(javaID);
+
+        if ((hiddenByType && !custom) || forceHiddenCustomType) {
             setInvisible(true);
             needHide = true;
             this.dirtyMetadata.put(EntityDataTypes.SCALE, 0f);
         } else {
             needHide = false;
+            if (wasHiddenByType) {
+                setInvisible(false);
+
+                if (config != null && config.getBoolean("vanilla-scale")) {
+                    applyScale();
+                } else {
+                    this.dirtyMetadata.put(EntityDataTypes.SCALE, 1f);
+                }
+            }
         }
 
         updateMainHand(session);
     }
 
-    private void applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
+    private boolean shouldUseLegacyMapping(FileConfiguration mappingConfig) {
+        // Type + options only is a wildcard mapping; treat as modern-style default.
+        if (!mappingConfig.contains("item-identifier") && !mappingConfig.contains("model-data")) {
+            return false;
+        }
+
+        if (mappingConfig.contains("item-identifier")) return false;
+        if (mappingConfig.contains("model-data")) return true;
+
+        FileConfiguration rootConfig = GeyserDisplayEntity.getExtension().getConfigManager().getConfig();
+        if (rootConfig.isBoolean("general.use-legacy-models")) {
+            return rootConfig.getBoolean("general.use-legacy-models");
+        }
+
+        return false;
+    }
+
+    private boolean applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
         CustomModelData modelData = null;
         DataComponents components = item.getDataComponentsPatch();
 
         if (components != null) modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
 
+        if (!mappingConfig.contains("model-data")) {
+            return entityApplyDisplayConfig(mappingConfig);
+        }
+
         if (mappingConfig.getInt("model-data") == -1) {
-            entityApplyDisplayConfig(mappingConfig);
-            return;
+            return entityApplyDisplayConfig(mappingConfig);
         }
 
-        if (modelData == null) return;
+        if (modelData == null) return false;
 
-        if (Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) {
-            entityApplyDisplayConfig(mappingConfig);
+        List<Float> modelDataFloats = modelData.floats();
+        if (modelDataFloats == null || modelDataFloats.isEmpty()) return false;
+
+        if (Math.abs(mappingConfig.getInt("model-data") - modelDataFloats.get(0)) < 0.5) {
+            return entityApplyDisplayConfig(mappingConfig);
         }
+
+        return false;
     }
 
-    private void applyModernItemModels(ItemData itemData, FileConfiguration mappingConfig) {
+    private boolean applyModernItemModels(ItemData itemData, FileConfiguration mappingConfig) {
         String itemBedrockIdentifier = itemData.getDefinition().getIdentifier().replace("geyser_custom:", "");
+        String mappingIdentifier = mappingConfig.getString("item-identifier");
 
-        if (mappingConfig.getString("item-identifier").equals("none")) {
-            entityApplyDisplayConfig(mappingConfig);
-            return;
+        if (mappingIdentifier == null) {
+            return entityApplyDisplayConfig(mappingConfig);
         }
 
-        if (mappingConfig.getString("item-identifier").equalsIgnoreCase(itemBedrockIdentifier)) {
-            entityApplyDisplayConfig(mappingConfig);
+        String normalizedIdentifier = mappingIdentifier.trim();
+        if (normalizedIdentifier.isEmpty() || normalizedIdentifier.equalsIgnoreCase("none")) {
+            return entityApplyDisplayConfig(mappingConfig);
         }
+
+        if (normalizedIdentifier.equalsIgnoreCase(itemBedrockIdentifier)) {
+            return entityApplyDisplayConfig(mappingConfig);
+        }
+
+        return false;
     }
 
-    private void entityApplyDisplayConfig(FileConfiguration mappingConfig) {
-        config = mappingConfig.getConfigurationSection("displayentityoptions");
+    private boolean entityApplyDisplayConfig(FileConfiguration mappingConfig) {
+        FileConfiguration mappingOptions = mappingConfig.getConfigurationSection("displayentityoptions");
+        if (mappingOptions == null) {
+            // Legacy compatibility for pre-migration config.yml format
+            mappingOptions = mappingConfig.getConfigurationSection("options");
+        }
+
+        if (mappingOptions != null) {
+            config = mappingOptions;
+        } else if (config == null) {
+            return false;
+        }
+
         setOffset(config.getDouble("y-offset"));
         if (config.getBoolean("vanilla-scale")) applyScale();
+        return true;
     }
 
     @Override
@@ -161,7 +235,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         ItemData helmet = ItemData.AIR; // TODO
         ItemData chest = item;
 
-        if (custom && !config.getBoolean("hand")) {
+        if (custom && (config == null || !config.getBoolean("hand"))) {
             MobArmorEquipmentPacket armorEquipmentPacket = new MobArmorEquipmentPacket();
             armorEquipmentPacket.setRuntimeEntityId(geyserId);
             armorEquipmentPacket.setHelmet(helmet);
@@ -231,7 +305,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
     }
 
     public void moveAbsolute(Vector3f position, float yaw, float pitch, float headYaw, boolean isOnGround, boolean teleported) {
-        double yOffset = config.getDouble("y-offset");
+        double yOffset = (config != null) ? config.getDouble("y-offset") : 0;
 
         position = position.clone().add(0, yOffset, 0);
 

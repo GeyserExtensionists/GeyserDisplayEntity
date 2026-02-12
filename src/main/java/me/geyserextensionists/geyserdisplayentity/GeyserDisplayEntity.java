@@ -38,6 +38,7 @@ public class GeyserDisplayEntity implements Extension {
 
     public static final Integer MAX_VALUE = 1000000;
     public static final Integer MIN_VALUE = -1000000;
+    private static final float DEFAULT_DISPLAY_HEIGHT = 1.975f;
 
     @Subscribe
     public void onLoad(GeyserPreInitializeEvent event) {
@@ -48,6 +49,8 @@ public class GeyserDisplayEntity implements Extension {
     @Subscribe
     public void onEntityPropertiesEvent(GeyserDefineEntityPropertiesEvent event) {
         try {
+            float displayHeight = getDisplayHeight();
+
             EntityDefinition<Entity> entityBase = EntityDefinition.builder(Entity::new)
                     .addTranslator(MetadataTypes.BYTE, Entity::setFlags)
                     .addTranslator(MetadataTypes.INT, Entity::setAir) // Air/bubbles
@@ -93,7 +96,7 @@ public class GeyserDisplayEntity implements Extension {
 
             BLOCK_DISPLAY = EntityDefinition.inherited(BlockDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.BLOCK_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.2f)
+                    .height(displayHeight).width(0.2f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:block_display")
                     .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntity::setDisplayedBlockState)
@@ -101,7 +104,7 @@ public class GeyserDisplayEntity implements Extension {
 
             ITEM_DISPLAY = EntityDefinition.inherited(ItemDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.ITEM_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.2f)
+                    .height(displayHeight).width(0.2f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:item_display")
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)
@@ -151,6 +154,15 @@ public class GeyserDisplayEntity implements Extension {
 
     private void loadManagers() {
         this.configManager = new ConfigManager();
+    }
+
+    private float getDisplayHeight() {
+        double configuredHeight = configManager.getConfig().getDouble("general.height");
+        if (configuredHeight <= 0) {
+            return DEFAULT_DISPLAY_HEIGHT;
+        }
+
+        return (float) configuredHeight;
     }
 
     public static GeyserDisplayEntity getExtension() {

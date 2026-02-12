@@ -16,3 +16,7 @@ general:
 hide-types:
   - "minecraft:leather_horse_armor"
   - "minecraft:bone"
+
+# Always hide item types, even when translated to custom Bedrock item definitions
+hide-custom-types:
+  - "minecraft:leather_horse_armor"
