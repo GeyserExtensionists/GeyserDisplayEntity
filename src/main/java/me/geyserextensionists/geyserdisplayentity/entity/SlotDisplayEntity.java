@@ -5,9 +5,11 @@ import me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity;
 import me.geyserextensionists.geyserdisplayentity.util.FileConfiguration;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.matrix.Matrix3f;
+import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.properties.type.FloatProperty;
@@ -17,6 +19,7 @@ import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.util.MathUtils;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MAX_VALUE;
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MIN_VALUE;
@@ -161,24 +164,7 @@ public class SlotDisplayEntity extends Entity {
     }
 
     protected void applyBedrockYawPitchFromCombined() {
-        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
-
-        Vector3f fwd = combined.rotate(0f, 0f, 1f);
-        float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
-        float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
-
-        yawDeg = MathUtils.wrapDegrees(yawDeg);
-
-        setYaw(yawDeg);
-        setHeadYaw(yawDeg);
-        setPitch(pitchDeg);
-
-        MoveEntityAbsolutePacket rotPkt = new MoveEntityAbsolutePacket();
-        rotPkt.setRuntimeEntityId(geyserId);
-        rotPkt.setPosition(position);
-        rotPkt.setRotation(getBedrockRotation());
-        rotPkt.setTeleported(false);
-        session.sendUpstreamPacket(rotPkt);
+        moveAbsolute(position, getYaw(), getPitch(), false, false);
     }
 
     protected Vector3f toEulerZYX(Quaternionf q) {

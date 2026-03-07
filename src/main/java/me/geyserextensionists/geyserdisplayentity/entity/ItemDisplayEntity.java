@@ -5,6 +5,7 @@ import me.geyserextensionists.geyserdisplayentity.type.DisplayType;
 import me.geyserextensionists.geyserdisplayentity.util.DeltaUtils;
 import me.geyserextensionists.geyserdisplayentity.util.FileConfiguration;
 import org.cloudburstmc.math.imaginary.Quaternionf;
+import org.cloudburstmc.math.vector.Vector3d;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
@@ -12,7 +13,9 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
+import org.cloudburstmc.protocol.bedrock.packet.MoveEntityDeltaPacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
+import org.geysermc.geyser.entity.vehicle.ClientVehicle;
 import org.geysermc.geyser.item.type.DyeableArmorItem;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.item.ItemTranslator;
@@ -33,15 +36,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
     private Byte color;
     private boolean custom = false;
     private boolean needHide = false;
-    private double lastOffset = 0;
 
     public ItemDisplayEntity(EntitySpawnContext entitySpawnContext) {
         super(entitySpawnContext);
-    }
-
-    public void setOffset(double offset) {
-        moveRelative(0, offset - lastOffset, 0, yaw, pitch, headYaw, false);
-        this.lastOffset = offset;
     }
 
     public void setDisplayedItem(EntityMetadata<ItemStack, ?> entityMetadata) {
@@ -141,7 +138,6 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
     private void entityApplyDisplayConfig(FileConfiguration mappingConfig) {
         config = mappingConfig.getConfigurationSection("displayentityoptions");
-        setOffset(config.getDouble("y-offset"));
         if (config.getBoolean("vanilla-scale")) applyScale();
     }
 
@@ -230,22 +226,15 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         return closestColorIndex;
     }
 
-    public void moveAbsolute(Vector3f position, float yaw, float pitch, float headYaw, boolean isOnGround, boolean teleported) {
+    @Override
+    public void moveAbsoluteRaw(Vector3f position, float yaw, float pitch, float headYaw, boolean isOnGround, boolean teleported) {
         double yOffset = config.getDouble("y-offset");
-
-        position = position.clone().add(0, yOffset, 0);
-
-        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
-
-        Vector3f fwd = combined.rotate(0f, 0f, 1f);
-        float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
-        float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
-        yawDeg += getYaw();
-        yawDeg = MathUtils.wrapDegrees(yawDeg);
-        setYaw(yawDeg);
-        setHeadYaw(yawDeg);
-        setPitch(pitchDeg);
         setPosition(position);
+        setYaw(yaw);
+        setPitch(pitch);
+        setHeadYaw(headYaw);
+        setOnGround(isOnGround);
+        position = position.clone().add(0, yOffset, 0);
         setOnGround(isOnGround);
 
         MoveEntityAbsolutePacket moveEntityPacket = new MoveEntityAbsolutePacket();
@@ -256,5 +245,39 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         moveEntityPacket.setTeleported(teleported);
 
         session.sendUpstreamPacket(moveEntityPacket);
+    }
+
+    public void moveRelativeRaw(double relX, double relY, double relZ, float yaw, float pitch, float headYaw, boolean isOnGround) {
+        if (this instanceof ClientVehicle clientVehicle) {
+            if (clientVehicle.isClientControlled()) {
+                return;
+            }
+            clientVehicle.getVehicleComponent().moveRelative(relX, relY, relZ);
+        }
+        this.position = Vector3f.from(this.position.getX() + relX, this.position.getY() + relY, this.position.getZ() + relZ);
+        setOnGround(isOnGround);
+        if (pitch != this.pitch) {
+            this.pitch = pitch;
+        }
+
+        if (yaw != this.yaw) {
+            this.yaw = yaw;
+        }
+
+        if (headYaw != this.headYaw) {
+            this.headYaw = headYaw;
+        }
+        moveAbsoluteRaw(this.position, this.yaw, this.pitch, this.headYaw, isOnGround, false);
+    }
+
+    @Override
+    public Vector3f getBedrockRotation() {
+        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
+        Vector3f fwd = combined.rotate(0f, 0f, 1f);
+        float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
+        float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
+        yawDeg += getYaw();
+        yawDeg = MathUtils.wrapDegrees(yawDeg);
+        return Vector3f.from(pitchDeg, yawDeg, yawDeg);
     }
 }
