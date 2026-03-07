@@ -164,7 +164,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
             armorEquipmentPacket.setBoots(ItemData.AIR);
             armorEquipmentPacket.setChestplate(chest);
             armorEquipmentPacket.setLeggings(ItemData.AIR);
-            armorEquipmentPacket.setBody(chest); // WHY
+            armorEquipmentPacket.setBody(ItemData.AIR);
 
             session.sendUpstreamPacket(armorEquipmentPacket);
         } else {
