@@ -164,7 +164,7 @@ public class SlotDisplayEntity extends Entity {
     }
 
     protected void applyBedrockYawPitchFromCombined() {
-        moveAbsolute(position, getYaw(), getPitch(), false, false);
+        moveAbsolute(position, getYaw(), getPitch(), false, true);
     }
 
     protected Vector3f toEulerZYX(Quaternionf q) {

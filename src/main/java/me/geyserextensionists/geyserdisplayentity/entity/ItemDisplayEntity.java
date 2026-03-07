@@ -41,6 +41,12 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         super(entitySpawnContext);
     }
 
+    @Override
+    public void spawnEntity() {
+        super.spawnEntity();
+        moveAbsoluteRaw(position, yaw, pitch, headYaw, onGround, true);
+    }
+
     public void setDisplayedItem(EntityMetadata<ItemStack, ?> entityMetadata) {
         ItemStack stack = entityMetadata.getValue();
         if (stack == null) {
@@ -247,6 +253,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         session.sendUpstreamPacket(moveEntityPacket);
     }
 
+    @Override
     public void moveRelativeRaw(double relX, double relY, double relZ, float yaw, float pitch, float headYaw, boolean isOnGround) {
         if (this instanceof ClientVehicle clientVehicle) {
             if (clientVehicle.isClientControlled()) {
