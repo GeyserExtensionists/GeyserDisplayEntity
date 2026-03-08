@@ -93,7 +93,7 @@ public class GeyserDisplayEntity implements Extension {
 
             BLOCK_DISPLAY = EntityDefinition.inherited(BlockDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.BLOCK_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.2f)
+                    .height(configManager.getConfig().getInt("general.height")).width(0.001f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:block_display")
                     .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntity::setDisplayedBlockState)
@@ -101,7 +101,7 @@ public class GeyserDisplayEntity implements Extension {
 
             ITEM_DISPLAY = EntityDefinition.inherited(ItemDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.ITEM_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.2f)
+                    .height(configManager.getConfig().getInt("general.height")).width(0.001f)
                     .propertiesBuilder(displayPropBuilder)
                     .identifier("geyser:item_display")
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)
