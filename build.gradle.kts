@@ -1,10 +1,10 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.2.2"
+    id("com.gradleup.shadow") version "9.4.0"
 }
 
 group = "me.geyserextensionists"
-version = "1.0.4"
+version = "1.0.7"
 
 repositories {
     mavenCentral()
@@ -13,14 +13,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.geysermc.geyser:core:2.9.3-SNAPSHOT")
-    compileOnly("org.geysermc.geyser:api:2.9.3-SNAPSHOT")
+    compileOnly("org.geysermc.geyser:core:2.9.5-SNAPSHOT")
+    compileOnly("org.geysermc.geyser:api:2.9.5-SNAPSHOT")
 
     implementation("org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT")
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
 tasks.compileJava {

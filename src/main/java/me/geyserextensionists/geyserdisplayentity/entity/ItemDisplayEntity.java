@@ -5,7 +5,6 @@ import me.geyserextensionists.geyserdisplayentity.type.DisplayType;
 import me.geyserextensionists.geyserdisplayentity.util.DeltaUtils;
 import me.geyserextensionists.geyserdisplayentity.util.FileConfiguration;
 import org.cloudburstmc.math.imaginary.Quaternionf;
-import org.cloudburstmc.math.vector.Vector3d;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
@@ -13,7 +12,6 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
-import org.cloudburstmc.protocol.bedrock.packet.MoveEntityDeltaPacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.vehicle.ClientVehicle;
 import org.geysermc.geyser.item.type.DyeableArmorItem;
@@ -55,6 +53,8 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
             return;
         }
 
+        config = GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getConfigurationSection("general");
+
         ItemData item = ItemTranslator.translateToBedrock(session, stack);
         this.item = item;
 
@@ -71,6 +71,8 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
 
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
+            if (mappingsConfig == null) continue;
+
             for (Object mappingKey : mappingsConfig.getRootNode().childrenMap().keySet()) {
                 String mappingString = mappingKey.toString();
 
@@ -78,13 +80,13 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
                 if (mappingConfig == null) continue;
                 if (!mappingConfig.getString("type").equals(type)) continue;
 
-                if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("general.use-legacy-models")) {
+                if (mappingConfig.contains("model-data")) {
                     applyLegacyModelData(stack, mappingConfig);
-                    break;
+                } else {
+                    applyModernItemModels(item, mappingConfig);
                 }
 
-                applyModernItemModels(item, mappingConfig);
-                break;
+                if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("settings.debug.per-player-load-mappings")) GeyserDisplayEntity.getExtension().logger().info("Loading Mappings: " + mappingString);
             }
         }
 
@@ -246,7 +248,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         MoveEntityAbsolutePacket moveEntityPacket = new MoveEntityAbsolutePacket();
         moveEntityPacket.setRuntimeEntityId(geyserId);
         moveEntityPacket.setPosition(position);
-        moveEntityPacket.setRotation(getBedrockRotation());
+        moveEntityPacket.setRotation(bedrockRotation());
         moveEntityPacket.setOnGround(isOnGround);
         moveEntityPacket.setTeleported(teleported);
 
@@ -256,13 +258,14 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
     @Override
     public void moveRelativeRaw(double relX, double relY, double relZ, float yaw, float pitch, float headYaw, boolean isOnGround) {
         if (this instanceof ClientVehicle clientVehicle) {
-            if (clientVehicle.isClientControlled()) {
-                return;
-            }
+            if (clientVehicle.shouldSimulateMovement()) return;
+
             clientVehicle.getVehicleComponent().moveRelative(relX, relY, relZ);
         }
+
         this.position = Vector3f.from(this.position.getX() + relX, this.position.getY() + relY, this.position.getZ() + relZ);
         setOnGround(isOnGround);
+
         if (pitch != this.pitch) {
             this.pitch = pitch;
         }
@@ -274,11 +277,12 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         if (headYaw != this.headYaw) {
             this.headYaw = headYaw;
         }
+
         moveAbsoluteRaw(this.position, this.yaw, this.pitch, this.headYaw, isOnGround, false);
     }
 
     @Override
-    public Vector3f getBedrockRotation() {
+    public Vector3f bedrockRotation() {
         Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
         Vector3f fwd = combined.rotate(0f, 0f, 1f);
         float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
