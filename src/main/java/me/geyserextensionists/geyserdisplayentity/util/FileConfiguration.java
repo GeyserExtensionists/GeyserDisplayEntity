@@ -104,6 +104,23 @@ public class FileConfiguration {
         }
     }
 
+    public float getFloat(String path) {
+        CommentedConfigurationNode node = getInternal(path);
+        if (node == null) return 0;
+        return node.getFloat();
+    }
+
+    public List<Float> getFloatList(String path) {
+        CommentedConfigurationNode node = getInternal(path);
+        if (node == null || node.virtual()) return List.of();
+
+        try {
+            return node.getList(Float.class, List.of());
+        } catch (SerializationException err) {
+            throw new RuntimeException(err);
+        }
+    }
+
     public boolean getBoolean(String path) {
          CommentedConfigurationNode node = getInternal(path);
         if (node == null) return false;

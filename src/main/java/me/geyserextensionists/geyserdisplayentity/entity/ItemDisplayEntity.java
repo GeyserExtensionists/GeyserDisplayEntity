@@ -70,6 +70,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
 
+        boolean mappingApplied = false;
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
             if (mappingsConfig == null) continue;
 
@@ -80,14 +81,21 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
                 if (mappingConfig == null) continue;
                 if (!mappingConfig.getString("type").equals(type)) continue;
 
+                boolean applied;
                 if (mappingConfig.contains("model-data")) {
-                    applyLegacyModelData(stack, mappingConfig);
+                    applied = applyLegacyModelData(stack, mappingConfig);
                 } else {
-                    applyModernItemModels(item, mappingConfig);
+                    applied = applyModernItemModels(item, mappingConfig);
                 }
 
-                if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("settings.debug.per-player-load-mappings")) GeyserDisplayEntity.getExtension().logger().info("Loading Mappings: " + mappingString);
+                if (applied) {
+                    mappingApplied = true;
+                    if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getBoolean("settings.debug.per-player-load-mappings")) GeyserDisplayEntity.getExtension().logger().info("Loading Mappings: " + mappingString + " - " + mappingConfig.getString("item-identifier"));
+                    break;
+                }
             }
+
+            if (mappingApplied) break;
         }
 
         if (!item.getDefinition().getIdentifier().startsWith("minecraft:")) {
@@ -101,52 +109,72 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         // HIDE_TYPES check only if stack is present (it is)
         String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier();
+        boolean wasHiddenByType = needHide;
 
-        if (GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getStringList("hide-types").contains(javaID)) {
+        // Keep hide-types behavior for vanilla items, but allow custom translated items
+        // (e.g. custom model data on minecraft:bone) to remain visible unless explicitly forced.
+        FileConfiguration rootConfig = GeyserDisplayEntity.getExtension().getConfigManager().getConfig();
+        boolean hiddenByType = rootConfig.getStringList("hide-types").contains(javaID);
+        boolean forceHiddenCustomType = rootConfig.getStringList("hide-custom-types").contains(javaID);
+
+        if ((hiddenByType && !custom) || forceHiddenCustomType) {
             setInvisible(true);
             needHide = true;
             this.dirtyMetadata.put(EntityDataTypes.SCALE, 0f);
         } else {
             needHide = false;
+            if (wasHiddenByType) {
+                setInvisible(false);
+
+                if (config != null && config.getBoolean("vanilla-scale")) {
+                    applyScale();
+                } else {
+                    this.dirtyMetadata.put(EntityDataTypes.SCALE, 1f);
+                }
+            }
         }
 
         updateMainHand(session);
     }
 
-    private void applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
+    private boolean applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
         CustomModelData modelData = null;
         DataComponents components = item.getDataComponentsPatch();
 
         if (components != null) modelData = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+        if (mappingConfig.getInt("model-data") == -1) return entityApplyDisplayConfig(mappingConfig);
+        if (modelData == null) return false;
+        
+        if (Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) return entityApplyDisplayConfig(mappingConfig);
 
-        if (mappingConfig.getInt("model-data") == -1) {
-            entityApplyDisplayConfig(mappingConfig);
-            return;
-        }
-
-        if (modelData == null) return;
-
-        if (Math.abs(mappingConfig.getInt("model-data") - modelData.floats().get(0)) < 0.5) {
-            entityApplyDisplayConfig(mappingConfig);
-        }
+        return false;
     }
 
-    private void applyModernItemModels(ItemData itemData, FileConfiguration mappingConfig) {
+    private boolean applyModernItemModels(ItemData itemData, FileConfiguration mappingConfig) {
         String itemBedrockIdentifier = itemData.getDefinition().getIdentifier().replace("geyser_custom:", "");
+        String mappingIdentifier = mappingConfig.getString("item-identifier");
 
-        if (mappingConfig.getString("item-identifier").equals("none")) {
-            entityApplyDisplayConfig(mappingConfig);
-            return;
-        }
+        if (mappingIdentifier.equalsIgnoreCase("none")) return entityApplyDisplayConfig(mappingConfig);
+        if (mappingIdentifier.equalsIgnoreCase(itemBedrockIdentifier)) return entityApplyDisplayConfig(mappingConfig);
 
-        if (mappingConfig.getString("item-identifier").equalsIgnoreCase(itemBedrockIdentifier)) {
-            entityApplyDisplayConfig(mappingConfig);
-        }
+        return false;
     }
 
-    private void entityApplyDisplayConfig(FileConfiguration mappingConfig) {
-        config = mappingConfig.getConfigurationSection("displayentityoptions");
+    private boolean entityApplyDisplayConfig(FileConfiguration mappingConfig) {
+        FileConfiguration mappingOptions = mappingConfig.getConfigurationSection("displayentityoptions");
+        if (mappingOptions == null) {
+            // Legacy compatibility for pre-migration config.yml format
+            mappingOptions = mappingConfig.getConfigurationSection("options");
+        }
+
+        if (mappingOptions != null) {
+            config = mappingOptions;
+        } else if (config == null) {
+            return false;
+        }
+
         if (config.getBoolean("vanilla-scale")) applyScale();
+        return true;
     }
 
     @Override

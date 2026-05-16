@@ -2,7 +2,8 @@
 # model-data: -1
 
 # Modern Model format:
-# item-identifier: "none"
+# item-identifier: "none" - this takes the geyser mapping name e.g
+# - "bedrock_identifier": "geyser_custom:minecraft_field_windmill_still, only use minecraft_field_windmill_still"
 
 mappings:
   example:
