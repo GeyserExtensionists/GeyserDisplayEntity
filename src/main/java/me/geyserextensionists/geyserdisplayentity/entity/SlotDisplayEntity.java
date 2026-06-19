@@ -17,6 +17,9 @@ import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.util.MathUtils;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MAX_VALUE;
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MIN_VALUE;
 
@@ -26,6 +29,12 @@ public class SlotDisplayEntity extends Entity {
     protected Vector3f translation = Vector3f.from(0, 0, 0);
     protected Vector3f scale = Vector3f.from(1, 1, 1);
     protected Vector3f rotation = Vector3f.from(0, 0, 0);
+    protected Vector3f displayRotation = Vector3f.from(0, 0, 0);
+    protected Vector3f displayTranslation = Vector3f.from(0, 0, 0);
+    protected Quaternionf displayRotationQuat = Quaternionf.IDENTITY;
+    protected boolean hasDisplayRotation = false;
+    private static final Map<Long, Vector3f> DISPLAY_ROTATION_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Long, Vector3f> DISPLAY_TRANSLATION_CACHE = new ConcurrentHashMap<>();
     protected float qScale = 1F;
     protected boolean validQScale = false;
     protected boolean rotationUpdated = false;
@@ -71,6 +80,11 @@ public class SlotDisplayEntity extends Entity {
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
 
+        displayTranslation = DISPLAY_TRANSLATION_CACHE.getOrDefault((long) getEntityId(), Vector3f.from(0, 0, 0));
+        setDisplayRotation(DISPLAY_ROTATION_CACHE.getOrDefault((long) getEntityId(), Vector3f.from(0, 0, 0)));
+        pushRotationProperties();
+        pushTranslationProperties();
+
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
 
         updateBedrockEntityProperties();
@@ -96,9 +110,41 @@ public class SlotDisplayEntity extends Entity {
 
     public void setTranslation(EntityMetadata<Vector3f, ?> entityMetadata) {
         this.translation = entityMetadata.getValue();
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), translation.getX() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), translation.getY() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), translation.getZ() * 10);
+        pushTranslationProperties();
+    }
+
+    public void applyMappingTransform(Vector3f rotationOffset, Vector3f translationOffset) {
+        setDisplayRotation(rotationOffset);
+        this.displayTranslation = translationOffset;
+        DISPLAY_ROTATION_CACHE.put((long) getEntityId(), rotationOffset);
+        DISPLAY_TRANSLATION_CACHE.put((long) getEntityId(), translationOffset);
+        pushTranslationProperties();
+        updateBedrockEntityProperties();
+        applyBedrockYawPitchFromCombined();
+    }
+
+    protected void setDisplayRotation(Vector3f rot) {
+        this.displayRotation = rot;
+        this.hasDisplayRotation = rot.getX() != 0F || rot.getY() != 0F || rot.getZ() != 0F;
+        this.displayRotationQuat = this.hasDisplayRotation
+                ? Quaternionf.fromAngleDegAxis(rot.getX(), Vector3f.UNIT_X)
+                        .mul(Quaternionf.fromAngleDegAxis(rot.getY(), Vector3f.UNIT_Y))
+                        .mul(Quaternionf.fromAngleDegAxis(rot.getZ(), Vector3f.UNIT_Z))
+                : Quaternionf.IDENTITY;
+    }
+
+    protected void pushTranslationProperties() {
+        Vector3f t = this.translation.add(displayTranslation);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), t.getX() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), t.getY() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), t.getZ() * 10);
+    }
+
+    protected void pushRotationProperties() {
+        Vector3f r = this.rotation;
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(r.getX()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-r.getY()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-r.getZ()));
     }
 
     public void setScale(EntityMetadata<Vector3f, ?> entityMetadata) {
@@ -151,9 +197,7 @@ public class SlotDisplayEntity extends Entity {
             this.rotation = r;
         }
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
+        pushRotationProperties();
 
         this.qScale = s;
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
