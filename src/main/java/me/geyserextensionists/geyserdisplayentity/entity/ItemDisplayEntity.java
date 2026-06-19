@@ -328,11 +328,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
     @Override
     public Vector3f bedrockRotation() {
-        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight);
-        if (hasDisplayRotation) {
-            combined = combined.mul(displayRotationQuat);
-        }
-        combined = combined.normalize();
+        Quaternionf combined = Quaternionf.from(lastLeft).mul(lastRight).normalize();
         Vector3f fwd = combined.rotate(0f, 0f, 1f);
         float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
         float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
