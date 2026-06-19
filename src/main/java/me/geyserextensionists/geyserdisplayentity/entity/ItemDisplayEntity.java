@@ -174,7 +174,24 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         if (config.getBoolean("vanilla-scale")) applyScale();
+        applyMappingDisplayTransform(config);
         return true;
+    }
+
+    private void applyMappingDisplayTransform(FileConfiguration cfg) {
+        Vector3f rot = readVec3(cfg, "rotation");
+        Vector3f trans = readVec3(cfg, "translation");
+        if (rot == null && trans == null) return;
+        applyMappingTransform(
+                rot != null ? rot : Vector3f.from(0, 0, 0),
+                trans != null ? trans : Vector3f.from(0, 0, 0));
+    }
+
+    private static Vector3f readVec3(FileConfiguration cfg, String key) {
+        if (cfg == null || !cfg.contains(key)) return null;
+        List<Float> v = cfg.getFloatList(key);
+        if (v.size() < 3) return null;
+        return Vector3f.from(v.get(0), v.get(1), v.get(2));
     }
 
     @Override

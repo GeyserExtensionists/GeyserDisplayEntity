@@ -26,6 +26,8 @@ public class SlotDisplayEntity extends Entity {
     protected Vector3f translation = Vector3f.from(0, 0, 0);
     protected Vector3f scale = Vector3f.from(1, 1, 1);
     protected Vector3f rotation = Vector3f.from(0, 0, 0);
+    protected Vector3f displayRotation = Vector3f.from(0, 0, 0);
+    protected Vector3f displayTranslation = Vector3f.from(0, 0, 0);
     protected float qScale = 1F;
     protected boolean validQScale = false;
     protected boolean rotationUpdated = false;
@@ -67,9 +69,10 @@ public class SlotDisplayEntity extends Entity {
 
         if (config.getBoolean("vanilla-scale")) applyScale();
 
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
+        displayRotation = Vector3f.from(0, 0, 0);
+        displayTranslation = Vector3f.from(0, 0, 0);
+        pushRotationProperties();
+        pushTranslationProperties();
 
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
 
@@ -96,9 +99,29 @@ public class SlotDisplayEntity extends Entity {
 
     public void setTranslation(EntityMetadata<Vector3f, ?> entityMetadata) {
         this.translation = entityMetadata.getValue();
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), translation.getX() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), translation.getY() * 10);
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), translation.getZ() * 10);
+        pushTranslationProperties();
+    }
+
+    public void applyMappingTransform(Vector3f rotationOffset, Vector3f translationOffset) {
+        this.displayRotation = rotationOffset;
+        this.displayTranslation = translationOffset;
+        pushRotationProperties();
+        pushTranslationProperties();
+        updateBedrockEntityProperties();
+    }
+
+    protected void pushTranslationProperties() {
+        Vector3f t = this.translation.add(displayTranslation);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_x"), MAX_VALUE, MIN_VALUE, 0F), t.getX() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_y"), MAX_VALUE, MIN_VALUE, 0F), t.getY() * 10);
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:t_z"), MAX_VALUE, MIN_VALUE, 0F), t.getZ() * 10);
+    }
+
+    protected void pushRotationProperties() {
+        Vector3f r = this.displayRotation;
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(r.getX()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-r.getY()));
+        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-r.getZ()));
     }
 
     public void setScale(EntityMetadata<Vector3f, ?> entityMetadata) {
@@ -150,10 +173,6 @@ public class SlotDisplayEntity extends Entity {
         } else {
             this.rotation = r;
         }
-
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_x"), 180F, -180F, 0F), MathUtils.wrapDegrees(rotation.getX()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_y"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getY()));
-        propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:r_z"), 180F, -180F, 0F), MathUtils.wrapDegrees(-rotation.getZ()));
 
         this.qScale = s;
         propertyManager.addProperty(new FloatProperty(Identifier.of("geyser:s_q"), MAX_VALUE, MIN_VALUE, 0F), qScale);
