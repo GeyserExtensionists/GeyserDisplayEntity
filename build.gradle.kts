@@ -28,9 +28,11 @@ tasks.compileJava {
 }
 
 tasks.shadowJar {
-    archiveFileName.set("${rootProject.name}-${version}.jar")
+    archiveFileName.set("${rootProject.name}-fabric-${version}.jar")
 
     relocate("org.spongepowered.configurate", "me.geyserextensionists.geyserdisplayentity.libs.configurate")
+    relocate("org.cloudburstmc.netty", "org.geysermc.geyser.shaded.org.cloudburstmc.netty")
+    relocate("org.cloudburstmc.protocol", "org.geysermc.geyser.shaded.org.cloudburstmc.protocol")
 }
 
 tasks.build {
