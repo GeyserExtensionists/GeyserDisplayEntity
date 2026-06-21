@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "me.geyserextensionists"
-version = "1.0.10"
+version = "1.0.9"
 
 repositories {
     mavenCentral()
@@ -31,8 +31,6 @@ tasks.shadowJar {
     archiveFileName.set("${rootProject.name}-${version}.jar")
 
     relocate("org.spongepowered.configurate", "me.geyserextensionists.geyserdisplayentity.libs.configurate")
-    relocate("org.cloudburstmc.netty", "org.geysermc.geyser.shaded.org.cloudburstmc.netty")
-    relocate("org.cloudburstmc.protocol", "org.geysermc.geyser.shaded.org.cloudburstmc.protocol")
 }
 
 tasks.build {
