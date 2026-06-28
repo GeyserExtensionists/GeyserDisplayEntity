@@ -1,6 +1,7 @@
 package me.geyserextensionists.geyserdisplayentity.entity;
 
 import me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity;
+import me.geyserextensionists.geyserdisplayentity.managers.ConfigManager;
 import me.geyserextensionists.geyserdisplayentity.type.DisplayType;
 import me.geyserextensionists.geyserdisplayentity.util.DeltaUtils;
 import me.geyserextensionists.geyserdisplayentity.util.FileConfiguration;
@@ -111,13 +112,21 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier();
         boolean wasHiddenByType = needHide;
 
-        // Keep hide-types behavior for vanilla items, but allow custom translated items
-        // (e.g. custom model data on minecraft:bone) to remain visible unless explicitly forced.
-        FileConfiguration rootConfig = GeyserDisplayEntity.getExtension().getConfigManager().getConfig();
-        boolean hiddenByType = rootConfig.getStringList("hide-types").contains(javaID);
-        boolean forceHiddenCustomType = rootConfig.getStringList("hide-custom-types").contains(javaID);
+        ConfigManager cfg = GeyserDisplayEntity.getExtension().getConfigManager();
+        boolean hiddenByType = cfg.getHideTypes().contains(javaID);
+        boolean forceHiddenCustomType = cfg.getHideCustomTypes().contains(javaID);
+        boolean unmappedVanilla = cfg.isHideUnmappedVanilla() && !custom && !mappingApplied;
 
-        if ((hiddenByType && !custom) || forceHiddenCustomType) {
+        boolean hidden = (hiddenByType && !custom) || forceHiddenCustomType || unmappedVanilla;
+
+        if (cfg.isLogDisplays()) {
+            GeyserDisplayEntity.getExtension().logger().info("ItemDisplay java=" + javaID
+                    + " bedrock=" + item.getDefinition().getIdentifier()
+                    + " custom=" + custom + " mapped=" + mappingApplied
+                    + " -> " + (hidden ? "HIDDEN" : "SHOWN"));
+        }
+
+        if (hidden) {
             setInvisible(true);
             needHide = true;
             this.dirtyMetadata.put(EntityDataTypes.SCALE, 0f);

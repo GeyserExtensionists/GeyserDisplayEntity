@@ -14,6 +14,11 @@ public class ConfigManager {
 
     private LinkedHashMap<String, FileConfiguration> configMappingsCache;
 
+    private Set<String> hideTypes = Set.of();
+    private Set<String> hideCustomTypes = Set.of();
+    private boolean hideUnmappedVanilla = true;
+    private boolean logDisplays = false;
+
     public ConfigManager() {
         load();
     }
@@ -21,6 +26,14 @@ public class ConfigManager {
     public void load() {
         this.config = new FileConfiguration("config.yml");
         this.lang = new FileConfiguration("Lang/messages.yml");
+
+        this.hideTypes = new HashSet<>(config.getStringList("hide-types"));
+        this.hideCustomTypes = config.contains("hide-custom-types")
+                ? new HashSet<>(config.getStringList("hide-custom-types"))
+                : this.hideTypes;
+        this.hideUnmappedVanilla = !config.contains("hide-unmapped-vanilla-displays")
+                || config.getBoolean("hide-unmapped-vanilla-displays");
+        this.logDisplays = config.getBoolean("settings.debug.log-displays");
 
         if (!Files.exists(GeyserDisplayEntity.getExtension().dataFolder().resolve("Mappings"))) FileUtils.createFiles(GeyserDisplayEntity.getExtension(), "Mappings/example.yml");
 
@@ -53,5 +66,21 @@ public class ConfigManager {
 
     public LinkedHashMap<String, FileConfiguration> getConfigMappingsCache() {
         return configMappingsCache;
+    }
+
+    public Set<String> getHideTypes() {
+        return hideTypes;
+    }
+
+    public Set<String> getHideCustomTypes() {
+        return hideCustomTypes;
+    }
+
+    public boolean isHideUnmappedVanilla() {
+        return hideUnmappedVanilla;
+    }
+
+    public boolean isLogDisplays() {
+        return logDisplays;
     }
 }
