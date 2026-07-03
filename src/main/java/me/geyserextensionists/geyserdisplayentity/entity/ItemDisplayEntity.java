@@ -56,7 +56,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         config = GeyserDisplayEntity.getExtension().getConfigManager().getConfig().getConfigurationSection("general");
 
-        ItemData item = ItemTranslator.translateToBedrock(session, stack);
+        // Render display-entity items as flat items so custom-block items keep their custom item
+        // definition (Geyser skips it for custom-block items unless this flag is set).
+        ItemData item = ItemTranslator.translateToBedrock(session, stack, true);
         this.item = item;
 
         if (item instanceof DyeableArmorItem) {
