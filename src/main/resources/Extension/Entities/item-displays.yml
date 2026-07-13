@@ -1,0 +1,81 @@
+entity:
+  id: "geyser:item_display"
+  properties:
+    s-id:
+      id: "geyser:s_id"
+      property-type: "integer"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0
+    s-int:
+      id: "geyser:s_int"
+      property-type: "integer"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0
+    i-dur:
+      id: "geyser:i_dur"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    r-x:
+      id: "geyser:r_x"
+      property-type: "float"
+      min-value: -180
+      max-value: 180
+      default-value: 0.0
+    r-y:
+      id: "geyser:r_y"
+      property-type: "float"
+      min-value: -180
+      max-value: 180
+      default-value: 0.0
+    r-z:
+      id: "geyser:r_z"
+      property-type: "float"
+      min-value: -180
+      max-value: 180
+      default-value: 0.0
+    t-x:
+      id: "geyser:t_x"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    t-y:
+      id: "geyser:t_y"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    t-z:
+      id: "geyser:t_z"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    s-x:
+      id: "geyser:s_x"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    s-y:
+      id: "geyser:s_y"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    s-z:
+      id: "geyser:s_z"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0
+    s-q:
+      id: "geyser:s_q"
+      property-type: "float"
+      min-value: -1000000
+      max-value: 1000000
+      default-value: 0.0

@@ -15,6 +15,6 @@ public class BlockDisplayEntity extends SlotDisplayEntity {
     }
 
     public void setDisplayedBlockState(IntEntityMetadata blockState) {
-        this.dirtyMetadata.put(EntityDataTypes.DISPLAY_BLOCK_STATE, this.session.getBlockMappings().getBedrockBlock(blockState.getPrimitiveValue()));
+        this.metadata.put(EntityDataTypes.DISPLAY_BLOCK_STATE, this.session.getBlockMappings().getBedrockBlock(blockState.getPrimitiveValue()));
     }
 }

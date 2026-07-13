@@ -19,6 +19,9 @@ hide-types:
 hide-custom-types:
   - "minecraft:leather_horse_armor"
 
+hide-unmapped-vanilla-displays: true
+
 settings:
   debug:
     per-player-load-mappings: false
+    log-displays: false
