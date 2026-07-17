@@ -219,7 +219,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         ItemData helmet = ItemData.AIR; // TODO
         ItemData chest = item;
 
-        if (custom && !config.getBoolean("hand")) {
+        if (custom && !(config != null && config.getBoolean("hand"))) {
             MobArmorEquipmentPacket armorEquipmentPacket = new MobArmorEquipmentPacket();
             armorEquipmentPacket.setRuntimeEntityId(geyserId);
             armorEquipmentPacket.setHelmet(helmet);
@@ -290,7 +290,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
     @Override
     public void moveAbsoluteRaw(Vector3f position, float yaw, float pitch, float headYaw, boolean isOnGround, boolean teleported) {
-        double yOffset = config.getDouble("y-offset");
+        double yOffset = config != null ? config.getDouble("y-offset") : -0.5;
         setPosition(position);
         setYaw(yaw);
         setPitch(pitch);
