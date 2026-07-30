@@ -89,14 +89,14 @@ public class GeyserDisplayEntity implements Extension {
 
             BLOCK_DISPLAY = VanillaEntityType.inherited(BlockDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.BLOCK_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.001f)
+                    .height(configManager.getConfig().getFloat("general.height")).width(0.001f)
                     .bedrockDefinition(BLOCK_DISPLAY_BEDROCK)
                     .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntity::setDisplayedBlockState)
                     .build();
 
             ITEM_DISPLAY = VanillaEntityType.inherited(ItemDisplayEntity::new, slotDisplayBase)
                     .type(EntityType.ITEM_DISPLAY)
-                    .height(configManager.getConfig().getInt("general.height")).width(0.001f)
+                    .height(configManager.getConfig().getFloat("general.height")).width(0.001f)
                     .bedrockDefinition(ITEM_DISPLAY_BEDROCK)
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)
                     .addTranslator(MetadataTypes.BYTE, ItemDisplayEntity::setDisplayType)

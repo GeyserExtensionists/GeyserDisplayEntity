@@ -46,6 +46,12 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         moveAbsoluteRaw(position, yaw, pitch, headYaw, onGround, true);
     }
 
+    @Override
+    public Vector3f bedrockPosition() {
+        if (config == null) return super.bedrockPosition();
+        return super.bedrockPosition().up((float) config.getDouble("y-offset"));
+    }
+
     public void setDisplayedItem(EntityMetadata<ItemStack, ?> entityMetadata) {
         ItemStack stack = entityMetadata.getValue();
         if (stack == null) {
