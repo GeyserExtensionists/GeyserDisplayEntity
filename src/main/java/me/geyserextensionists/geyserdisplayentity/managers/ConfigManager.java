@@ -22,6 +22,7 @@ public class ConfigManager {
     private Set<String> hideCustomTypes = Set.of();
     private boolean hideUnmappedVanilla = true;
     private boolean logDisplays = false;
+    private float yawOffset = 0f;
 
     public ConfigManager(GeyserDisplayEntity extension) {
         this.extension = extension;
@@ -38,6 +39,7 @@ public class ConfigManager {
         this.hideCustomTypes = config.contains("hide-custom-types") ? new HashSet<>(config.getStringList("hide-custom-types")) : this.hideTypes;
         this.hideUnmappedVanilla = !config.contains("hide-unmapped-vanilla-displays") || config.getBoolean("hide-unmapped-vanilla-displays");
         this.logDisplays = config.getBoolean("settings.debug.log-displays");
+        this.yawOffset = (float) config.getDouble("general.yaw-offset");
 
         if (!Files.exists(GeyserDisplayEntity.getExtension().dataFolder().resolve("Entities"))) {
             FileUtils.createFiles(GeyserDisplayEntity.getExtension(), "Entities/item-displays.yml");
@@ -108,5 +110,9 @@ public class ConfigManager {
 
     public boolean isLogDisplays() {
         return logDisplays;
+    }
+
+    public float getYawOffset() {
+        return yawOffset;
     }
 }
