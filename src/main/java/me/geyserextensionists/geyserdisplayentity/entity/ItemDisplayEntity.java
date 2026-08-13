@@ -348,7 +348,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         Vector3f fwd = combined.rotate(0f, 0f, 1f);
         float yawDeg = (float) Math.toDegrees(Math.atan2(-fwd.getX(), fwd.getZ()));
         float pitchDeg = (float) Math.toDegrees(Math.asin(MathUtils.clamp(fwd.getY(), -1f, 1f)));
-        yawDeg += getYaw();
+        yawDeg += getYaw() + GeyserDisplayEntity.getExtension().getConfigManager().getYawOffset();
         yawDeg = MathUtils.wrapDegrees(yawDeg);
         return Vector3f.from(pitchDeg, yawDeg, yawDeg);
     }
