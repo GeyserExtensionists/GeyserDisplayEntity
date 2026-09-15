@@ -46,6 +46,12 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         moveAbsoluteRaw(position, yaw, pitch, headYaw, onGround, true);
     }
 
+    @Override
+    public Vector3f bedrockPosition() {
+        if (config == null) return super.bedrockPosition();
+        return super.bedrockPosition().up((float) config.getDouble("y-offset"));
+    }
+
     public void setDisplayedItem(EntityMetadata<ItemStack, ?> entityMetadata) {
         ItemStack stack = entityMetadata.getValue();
         if (stack == null) {
@@ -184,6 +190,10 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
         if (config.getBoolean("vanilla-scale")) applyScale();
         applyMappingDisplayTransform(config);
+
+        if (valid) {
+            moveAbsoluteRaw(position, yaw, pitch, headYaw, onGround, true);
+        }
         return true;
     }
 
@@ -290,18 +300,15 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
 
     @Override
     public void moveAbsoluteRaw(Vector3f position, float yaw, float pitch, float headYaw, boolean isOnGround, boolean teleported) {
-        double yOffset = config.getDouble("y-offset");
         setPosition(position);
         setYaw(yaw);
         setPitch(pitch);
         setHeadYaw(headYaw);
         setOnGround(isOnGround);
-        position = position.clone().add(0, yOffset, 0);
-        setOnGround(isOnGround);
 
         MoveEntityAbsolutePacket moveEntityPacket = new MoveEntityAbsolutePacket();
         moveEntityPacket.setRuntimeEntityId(geyserId);
-        moveEntityPacket.setPosition(position);
+        moveEntityPacket.setPosition(bedrockPosition());
         moveEntityPacket.setRotation(bedrockRotation());
         moveEntityPacket.setOnGround(isOnGround);
         moveEntityPacket.setTeleported(teleported);
