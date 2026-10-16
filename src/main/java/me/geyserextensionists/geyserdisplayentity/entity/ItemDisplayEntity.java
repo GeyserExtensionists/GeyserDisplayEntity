@@ -75,7 +75,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
             }
         }
 
-        String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
+        String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaKey().asString();
 
         boolean mappingApplied = false;
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
@@ -115,7 +115,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         // HIDE_TYPES check only if stack is present (it is)
-        String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier();
+        String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaKey().asString();
         boolean wasHiddenByType = needHide;
 
         ConfigManager cfg = GeyserDisplayEntity.getExtension().getConfigManager();
