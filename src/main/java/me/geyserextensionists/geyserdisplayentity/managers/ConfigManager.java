@@ -82,6 +82,13 @@ public class ConfigManager {
         return config;
     }
 
+    // "general" section, falling back to the pre-migration "displayentityoptions" one; null if neither exists
+    public FileConfiguration getGeneralConfig() {
+        FileConfiguration general = config.getConfigurationSection("general");
+        if (general == null) general = config.getConfigurationSection("displayentityoptions");
+        return general;
+    }
+
     public FileConfiguration getLang() {
         return lang;
     }
