@@ -15,7 +15,7 @@ import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.vehicle.ClientVehicle;
-import org.geysermc.geyser.item.type.DyeableArmorItem;
+import org.geysermc.geyser.item.type.DyeItem;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.item.ItemTranslator;
 import org.geysermc.geyser.util.MathUtils;
@@ -65,7 +65,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         ItemData item = ItemTranslator.translateToBedrock(session, stack);
         this.item = item;
 
-        if (item instanceof DyeableArmorItem) {
+        if (item instanceof DyeItem) {
             DataComponents data = stack.getDataComponentsPatch();
             if (data != null) {
                 Integer dyed = data.get(DataComponentTypes.DYED_COLOR);
@@ -75,7 +75,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
             }
         }
 
-        String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaIdentifier();
+        String type = session.getItemMappings().getMapping(stack.getId()).getJavaItem().javaKey().asString();
 
         boolean mappingApplied = false;
         for (FileConfiguration mappingsConfig : GeyserDisplayEntity.getExtension().getConfigManager().getConfigMappingsCache().values()) {
@@ -115,7 +115,7 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         // HIDE_TYPES check only if stack is present (it is)
-        String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier();
+        String javaID = session.getItemMappings().getMapping(stack).getJavaItem().javaKey().asString();
         boolean wasHiddenByType = needHide;
 
         ConfigManager cfg = GeyserDisplayEntity.getExtension().getConfigManager();

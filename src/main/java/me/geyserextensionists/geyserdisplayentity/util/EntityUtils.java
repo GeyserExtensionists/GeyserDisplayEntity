@@ -37,7 +37,6 @@ public class EntityUtils {
     public static void replaceJavaDefinition(EntityType javaType, VanillaEntityType<?> definition) {
         GeyserEntityType geyserType = GeyserEntityType.ofVanilla(javaType);
         Registries.JAVA_ENTITY_TYPES.register(geyserType, definition);
-        Registries.JAVA_ENTITY_IDENTIFIERS.register(geyserType.identifier().toString(), definition);
     }
 
     public static void registerFloat(GeyserDefineEntityPropertiesEvent event, Collection<GeyserEntityProperty<?>> existing, Identifier entityIdentifier, String propertyIdentifier, float min, float max, float defaultValue) {
