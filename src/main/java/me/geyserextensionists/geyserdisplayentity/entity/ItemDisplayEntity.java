@@ -253,7 +253,9 @@ public class ItemDisplayEntity extends SlotDisplayEntity implements Tickable {
         float cos = (float) Math.cos(radians);
         Vector3f world = position.add(centre.getX() * cos - centre.getZ() * sin, centre.getY(), centre.getX() * sin + centre.getZ() * cos);
 
-        Vector3f facing = left.mul(right).rotate(0, 0, 1);
+        // The face is on the display's -Z: the item model turns the skull over (180 about X) and the item display
+        // turns every item about Y, so a FIXED head looks away from its yaw and a billboarded one away from the viewer
+        Vector3f facing = left.mul(right).rotate(0, 0, -1);
         float yaw = MathUtils.wrapDegrees(frameYaw + (float) Math.toDegrees(Math.atan2(-facing.getX(), facing.getZ())));
         float size = (scale.getX() + scale.getY() + scale.getZ()) / 3;
         Vector3f origin = world.up(HEAD_CENTRE_Y * size);
