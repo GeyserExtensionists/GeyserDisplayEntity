@@ -14,12 +14,18 @@ import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
+import org.geysermc.geyser.entity.type.Tickable;
 import org.geysermc.geyser.entity.vehicle.ClientVehicle;
+import org.geysermc.geyser.item.Items;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.skin.SkinManager;
 import org.geysermc.geyser.translator.item.ItemTranslator;
 import org.geysermc.geyser.util.MathUtils;
+import org.geysermc.mcprotocollib.auth.texture.Texture;
+import org.geysermc.mcprotocollib.auth.texture.TextureType;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.type.ByteEntityMetadata;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.player.ResolvableProfile;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.CustomModelData;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
@@ -28,12 +34,23 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponen
 import java.util.Arrays;
 import java.util.List;
 
-public class ItemDisplayEntity extends SlotDisplayEntity {
+public class ItemDisplayEntity extends SlotDisplayEntity implements Tickable {
+
+    // Steve, which Java draws when a profile has no skin
+    private static final String DEFAULT_SKIN = "http://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb";
+    // Where Java draws a player_head in an item display: an 8 px cube whose bottom is half a block below the origin
+    private static final float HEAD_CENTRE_Y = -0.25f;
 
     private DisplayType displayType = DisplayType.NONE;
     private Byte color;
     private boolean custom = false;
     private boolean needHide = false;
+
+    private ResolvableProfile headProfile;
+    private String headSkin;
+    private DisplayHeadEntity head;
+    private Vector3f headPlacedAt;
+    private float headFacing;
 
     public ItemDisplayEntity(EntitySpawnContext entitySpawnContext) {
         super(entitySpawnContext);
@@ -43,6 +60,21 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
     public void spawnEntity() {
         super.spawnEntity();
         moveAbsoluteRaw(position, yaw, pitch, headYaw, onGround, true);
+        spawnHead();
+    }
+
+    @Override
+    public void despawnEntity() {
+        if (head != null) {
+            head.despawnEntity();
+            head = null;
+        }
+        super.despawnEntity();
+    }
+
+    @Override
+    public void tick() {
+        if (head != null) placeHead();
     }
 
     @Override
@@ -56,8 +88,20 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         if (stack == null) {
             this.item = ItemData.AIR;
             setInvisible(true);
+            removeHead();
             return;
         }
+
+        DataComponents components = stack.getDataComponentsPatch();
+        ResolvableProfile profile = stack.getId() == Items.PLAYER_HEAD.javaId() && components != null
+                ? components.get(DataComponentTypes.PROFILE) : null;
+        if (profile != null) {
+            showHead(profile);
+            this.item = ItemData.AIR;
+            updateMainHand(session);
+            return;
+        }
+        removeHead();
 
         config = GeyserDisplayEntity.getExtension().getConfigManager().getGeneralConfig();
 
@@ -150,6 +194,76 @@ public class ItemDisplayEntity extends SlotDisplayEntity {
         }
 
         updateMainHand(session);
+    }
+
+    private void showHead(ResolvableProfile profile) {
+        if (profile.equals(headProfile)) return;
+
+        headProfile = profile;
+        SkinManager.resolveProfile(profile).whenComplete((resolved, error) -> session.ensureInEventLoop(() -> {
+            if (headProfile != profile) return;
+            Texture texture = resolved == null ? null : SkinManager.getTextureDataFromProfile(resolved, TextureType.SKIN);
+            headSkin = texture == null ? DEFAULT_SKIN : texture.getURL();
+            spawnHead();
+        }));
+    }
+
+    private void spawnHead() {
+        if (!valid || headSkin == null) return;
+
+        if (head == null) {
+            head = new DisplayHeadEntity(session);
+            head.spawnEntity();
+            headPlacedAt = null;
+        }
+        head.setSkin(headSkin);
+        placeHead();
+    }
+
+    private void removeHead() {
+        headProfile = null;
+        headSkin = null;
+        if (head != null) {
+            head.despawnEntity();
+            head = null;
+        }
+    }
+
+    /**
+     * Lays the head out as Java does: the display's transformation (translation, left rotation, scale, right rotation)
+     * applied to the head, inside the display's frame, which billboarding turns to the viewer. Bedrock cannot tilt a
+     * player entity, so the frame only turns about the vertical axis and the head always stands upright.
+     */
+    private void placeHead() {
+        Quaternionf left = Quaternionf.from(lastLeft).normalize();
+        Quaternionf right = Quaternionf.from(lastRight).normalize();
+
+        Vector3f inner = right.rotate(0, HEAD_CENTRE_Y, 0).mul(scale);
+        Vector3f centre = left.rotate(inner.getX(), inner.getY(), inner.getZ()).add(translation);
+
+        float frameYaw;
+        if (billboard == BILLBOARD_VERTICAL || billboard == BILLBOARD_CENTER) {
+            Vector3f toViewer = session.getPlayerEntity().position().sub(position);
+            frameYaw = (float) Math.toDegrees(Math.atan2(-toViewer.getX(), toViewer.getZ()));
+        } else {
+            frameYaw = getYaw();
+        }
+        double radians = Math.toRadians(frameYaw);
+        float sin = (float) Math.sin(radians);
+        float cos = (float) Math.cos(radians);
+        Vector3f world = position.add(centre.getX() * cos - centre.getZ() * sin, centre.getY(), centre.getX() * sin + centre.getZ() * cos);
+
+        Vector3f facing = left.mul(right).rotate(0, 0, 1);
+        float yaw = MathUtils.wrapDegrees(frameYaw + (float) Math.toDegrees(Math.atan2(-facing.getX(), facing.getZ())));
+        float size = (scale.getX() + scale.getY() + scale.getZ()) / 3;
+        Vector3f origin = world.up(HEAD_CENTRE_Y * size);
+
+        boolean first = headPlacedAt == null;
+        if (first || origin.distanceSquared(headPlacedAt) > 1.0E-6f || Math.abs(MathUtils.wrapDegrees(yaw - headFacing)) > 0.5f) {
+            headPlacedAt = origin;
+            headFacing = yaw;
+            head.place(origin, yaw, size, first);
+        }
     }
 
     private boolean applyLegacyModelData(ItemStack item, FileConfiguration mappingConfig) {
