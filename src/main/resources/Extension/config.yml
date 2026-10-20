@@ -4,6 +4,8 @@ general:
   height: 1.7
   # The y-offset of display entity
   y-offset: -0.5
+  # Extra yaw rotation (degrees) added to display entities on Bedrock. 180 = flip to face the other way.
+  yaw-offset: 180.0
   # Use entity scale, instead of entity properties
   vanilla-scale: false
   vanilla-scale-multiplier: 1
