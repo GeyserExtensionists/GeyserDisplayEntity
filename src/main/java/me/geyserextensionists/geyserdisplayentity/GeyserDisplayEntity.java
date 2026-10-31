@@ -101,9 +101,6 @@ public class GeyserDisplayEntity implements Extension {
                     .addTranslator(MetadataTypes.ITEM_STACK, ItemDisplayEntity::setDisplayedItem)
                     .addTranslator(MetadataTypes.BYTE, ItemDisplayEntity::setDisplayType)
                     .build();
-
-            EntityUtils.replaceJavaDefinition(EntityType.BLOCK_DISPLAY, BLOCK_DISPLAY);
-            EntityUtils.replaceJavaDefinition(EntityType.ITEM_DISPLAY, ITEM_DISPLAY);
         } catch (Throwable err) {
             logger().error("Error in load", err);
         }

@@ -8,10 +8,6 @@ import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.BedrockEntityDefinition;
-import org.geysermc.geyser.entity.GeyserEntityType;
-import org.geysermc.geyser.entity.VanillaEntityType;
-import org.geysermc.geyser.registry.Registries;
-import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 
 import java.util.Collection;
 
@@ -32,12 +28,6 @@ public class EntityUtils {
         CustomEntityDefinition customDefinition = CustomEntityDefinition.of(identifier);
         event.register(customDefinition);
         return (BedrockEntityDefinition) customDefinition;
-    }
-
-    public static void replaceJavaDefinition(EntityType javaType, VanillaEntityType<?> definition) {
-        GeyserEntityType geyserType = GeyserEntityType.ofVanilla(javaType);
-        // Vanilla identifiers resolve through GeyserEntityType; no separate identifier registry is needed.
-        Registries.JAVA_ENTITY_TYPES.register(geyserType, definition);
     }
 
     public static void registerFloat(GeyserDefineEntityPropertiesEvent event, Collection<GeyserEntityProperty<?>> existing, Identifier entityIdentifier, String propertyIdentifier, float min, float max, float defaultValue) {
