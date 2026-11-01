@@ -77,7 +77,7 @@ public class GeyserDisplayEntity implements Extension {
                     .addTranslator(MetadataTypes.VECTOR3, SlotDisplayEntity::setScale) // Scale
                     .addTranslator(MetadataTypes.QUATERNION, SlotDisplayEntity::setLeftRotation) // Left rotation
                     .addTranslator(MetadataTypes.QUATERNION, SlotDisplayEntity::setRightRotation) // Right rotation
-                    .addTranslator(null) // Billboard render constraints
+                    .addTranslator(MetadataTypes.BYTE, SlotDisplayEntity::setBillboard) // Billboard render constraints
                     .addTranslator(null) // Brightness override
                     .addTranslator(null) // View range
                     .addTranslator(null) // Shadow radius

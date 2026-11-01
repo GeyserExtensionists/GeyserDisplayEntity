@@ -16,13 +16,20 @@ import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.util.MathUtils;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.type.ByteEntityMetadata;
 
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MAX_VALUE;
 import static me.geyserextensionists.geyserdisplayentity.GeyserDisplayEntity.MIN_VALUE;
 
 public class SlotDisplayEntity extends Entity {
 
+    protected static final byte BILLBOARD_FIXED = 0;
+    protected static final byte BILLBOARD_VERTICAL = 1;
+    protected static final byte BILLBOARD_HORIZONTAL = 2;
+    protected static final byte BILLBOARD_CENTER = 3;
+
     protected ItemData item = ItemData.AIR;
+    protected byte billboard = BILLBOARD_FIXED;
     protected Vector3f translation = Vector3f.from(0, 0, 0);
     protected Vector3f scale = Vector3f.from(1, 1, 1);
     protected Vector3f rotation = Vector3f.from(0, 0, 0);
@@ -139,6 +146,10 @@ public class SlotDisplayEntity extends Entity {
         float scale = (vector3f.getX() + vector3f.getY() + vector3f.getZ()) / 3;
         if (config != null && config.getBoolean("vanilla-scale")) scale *= (float) config.getDouble("vanilla-scale-multiplier");
         this.metadata.put(EntityDataTypes.SCALE, scale);
+    }
+
+    public void setBillboard(ByteEntityMetadata entityMetadata) {
+        this.billboard = entityMetadata.getPrimitiveValue();
     }
 
     public void setLeftRotation(EntityMetadata<Quaternionf, ?> entityMetadata) {
